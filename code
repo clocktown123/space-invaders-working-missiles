@@ -1,0 +1,292 @@
+import pygame #bring in module to handle graphics, input, etc
+import random
+
+pygame.init() #set up pygame
+pygame.display.set_caption("space invaders") #sets the window title
+gamescreen = pygame.display.set_mode((800,800)) #creates game screen
+clock = pygame.time.Clock() #set up clock
+gameover = False #variable to run our game loop
+
+class Bullet:
+    def __init__(self, xpos, ypos):
+        self.xpos = xpos
+        self.ypos = ypos
+        self.isAlive = False
+       
+    def move(self, xpos, ypos):
+        if self.isAlive == True: #only shoot live bullets
+            self.ypos-=5 #move up when shot
+        if self.ypos < 0: #check if you've hit the top of the screen
+            self.isAlive == False #set to dead
+            self.xpos = xpos #reset to player position
+            self.ypos = ypos
+           
+    def draw(self):
+        pygame.draw.rect(gamescreen, (250, 250, 250), (self.xpos, self.ypos, 3, 20))
+   
+
+
+class Alien:
+    def __init__(self, xpos, ypos):
+        self.xpos = xpos
+        self.ypos = ypos
+        self.color = (random.randrange(100, 250),random.randrange(100, 250),random.randrange(100, 250))
+        self.isAlive = True
+        self.direction = 1
+    def draw(self):
+        if self.isAlive == True:
+            pygame.draw.rect(gamescreen, (250, 250, 250), (self.xpos, self.ypos, 40, 40))
+    def move(self):
+        if timer%100==0:
+            self.xpos+=25
+            print("moving right")
+    def move(self, time):
+
+        #resets what direction youre moving every 8 moves:
+        if time % 400 == 0:
+            self.ypos += 100 #move down
+            self.direction *= -1 #flip direction
+            return 0 #resets timer to 0
+       
+        #move every time the timer increases by 100:
+        if time % 100 == 0:
+            self.xpos+=25*self.direction #move right
+           
+        return time #doesnt reset if first if statment hasnt been executed
+   
+    def collide(self, BulletX, BulletY):
+        if self.isAlive: #only hits live aliens
+            if BulletX > self.xpos: #check if bullet is right of the left side of the alien
+                if BulletX < self.xpos +40: # check if the bullet is left of the right side of the alien
+                    if BulletY < self.ypos +40: #check if the bullet is above the alien's bottom
+                        if BulletY > self.ypos: #check if the bullet is below the top of the alien
+                            print ("hit")
+                            self.isAlive = False #set the alien to dead
+                            return False #set the bullet to dead
+                       
+        return True #otherwise keep bullet alive
+   
+class Wall:
+    def __init__(self, xpos, ypos, numHits):
+        self.xpos = xpos
+        self.ypos = ypos
+        self.isAlive = True
+        self.numHits = 0
+   
+    def draw(self):
+        if self.numHits > -1:
+            if self.numHits == 0:
+                pygame.draw.rect(gamescreen, (250, 250, 20), (self.xpos, self.ypos, 30, 30))
+            if self.numHits == 1:
+                pygame.draw.rect(gamescreen, (150, 150, 10), (self.xpos, self.ypos, 30, 30))
+            if self.numHits == 2:
+                pygame.draw.rect(gamescreen, (50, 50, 0), (self.xpos, self.ypos, 30, 30))
+           
+    def collide(self, BulletX, BulletY):
+        if self.numHits < 3: #only hits live aliens
+            if BulletX > self.xpos: #check if bullet is right of the left side of the alien
+                if BulletX < self.xpos +30: # check if the bullet is left of the right side of the alien
+                    if BulletY < self.ypos +30: #check if the bullet is above the alien's bottom
+                        if BulletY > self.ypos: #check if the bullet is below the top of the alien
+                            print ("bit")
+                            self.numHits += 1 #set the alien to dead
+                            return False #set the bullet to dead
+        return True #otherwise keep bullet alive
+    
+class Missile:
+    def __init__(self):
+        self.xpos = -10
+        self.ypos = -10
+        self.isAlive = False
+        
+    def move(self):        
+        if self.isAlive == True: #only shoot live bullets
+            self.ypos+=5 #move up when shot
+        if self.ypos > 800: #check if you've hit the top of the screen
+            self.isAlive == False #set to dead
+            self.xpos = -10 #reset to player position
+            self.ypos = -10
+            
+    def draw(self):
+        pygame.draw.rect(gamescreen, (250, 50, 50), (self.xpos, self.ypos, 3, 20))
+
+        
+            
+        
+missiles = []
+for g in range (10):   
+        missiles.append(Missile())
+       
+       
+armada = [] #create empty list
+for i in range (4): #handles rows
+    for j in range (9): #handles colums
+        armada.append(Alien(j*80+50, i*80+50)) #push alien objects into list
+       
+walls =[]
+for k in range (4):
+    for i in range (2):
+        for j in range (3):
+            walls.append(Wall(j*30+200*k+50, i*30+600, 0))
+       
+
+xpos = 400
+ypos = 750
+xpos1 = 420
+ypos1 = 730
+xpos2 = 405
+ypos2 = 740
+xpos3 = 425
+ypos3 = 720
+
+#game variables
+timer =0;
+
+moveLeft = False
+
+moveRight = False
+
+shoot = False
+
+#numHits = 0
+
+bullet = Bullet(xpos+28, ypos)#create bullet object and pass player position
+
+
+while not gameover: #GAME LOOP#########################################################################
+    clock.tick(60) #fps
+    timer += 1
+   
+    #input section--------------------------------------------------------
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            gameover = True #quit game if x is pressed in top corner
+           
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                moveLeft = True
+               
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_RIGHT:
+                moveRight = True
+               
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                shoot = True
+               
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_LEFT:
+                moveLeft = False
+               
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_RIGHT:
+                moveRight = False
+               
+        if event.type == pygame.KEYUP:
+            if event.key == pygame.K_SPACE:
+                shoot = False
+   
+    #physics section-------------------------------------------------------------------------------
+                
+    for g in range (len(missiles)):
+        missiles[g].move()
+        
+             
+             
+             
+    for i in range (len(armada)):
+        timer = armada[i].move(timer)
+   
+    #check variables from the input section
+    if moveLeft == True:
+        vx = -3
+    elif moveRight == True:
+        vx = 3
+    else:
+        vx = 0
+   
+    #shoot bullet
+    if shoot == True: #check keyboard input
+        bullet.isAlive = True
+       
+    if bullet.isAlive == True:
+        bullet.move(xpos+28, ypos)#shoot from player position
+        if bullet.isAlive == True:
+        #check for collision between bullet and enemy
+            for i in range (len(armada)): #check the bullet with entire armadas positions
+                bullet.isAlive = armada[i].collide(bullet.xpos, bullet.ypos) #if we hit, set the bullet to false
+                if bullet.isAlive == False:
+                    break
+               
+        #shoot walls
+        #check for collision between bullet and enemy
+            for k in range (len(walls)): #check bullet with entire list of wall positions
+                if walls[k].collide(bullet.xpos, bullet.ypos) == False: #if we hit set bullet to false
+                    bullet.isAlive = False
+                    break
+    
+    
+               
+               
+    else: #make bullet follow player when not moving up
+        bullet.xpos = xpos +28
+        bullet.ypos = ypos
+        
+    
+    #for k in range(len(walls)):
+        #for g in range(len(missiles)):
+            #if missiles[g].isAlive == True:
+                
+    
+  
+    num = random.randrange(0, 100)
+    if num <2:
+        anum = random.randrange(0, len(armada))
+        if armada[anum].isAlive==True:
+            for i in range(len(missiles)):
+                if missiles[i].isAlive == False:
+                    missiles[i].isAlive=True
+                    missiles[i].xpos =  armada[anum].xpos+5
+                    missiles[i].ypos = armada[anum].ypos
+                    print("pew pew!")
+                    break
+    
+    #update player position
+    xpos += vx
+    xpos1 += vx
+    xpos2 += vx
+    xpos3 += vx
+   
+   
+    # RENDER section------------------------------------------------------------------------------------------
+   
+    gamescreen.fill((0, 0, 0))
+   
+    #gamescreen.fill((255,255,255)) #wipe screen so it doesnt smear
+   
+    pygame.draw.rect(gamescreen, (250, 100, 100), (xpos, ypos, 60, 20)) #draw player
+    pygame.draw.rect(gamescreen, (250, 100, 100), (xpos1, ypos1, 20, 25))
+    pygame.draw.rect(gamescreen, (250, 100, 100), (xpos2, ypos2, 50, 25))
+    pygame.draw.rect(gamescreen, (250, 100, 100), (xpos3, ypos3, 10, 40))
+   
+    if bullet.isAlive == True:
+        bullet.draw()
+        
+    
+   
+    #draw all aliens in list:
+    if armada[i].isAlive == True:
+        for i in range (len(armada)):
+            armada[i].draw()
+    for k in range (len(walls)):
+        walls[k].draw()
+    for g in range (len(missiles)):
+        if missiles[g].isAlive == True:
+            missiles[g].draw()
+            #print("drawing at", missiles[g].xpos, missiles[g].ypos)
+   
+    pygame.display.flip() #this flips the buffer (memory) where stuff has been "drawn" to the actual screen
+   
+#end game loop########################################################################
+   
+pygame.quit()
